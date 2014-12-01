@@ -25,6 +25,8 @@ import time
 import gettext
 import thread
 import subprocess
+import re
+from distutils.version import StrictVersion
 
 
 _=gettext.gettext
@@ -48,10 +50,16 @@ class KDE4Plugin( pluginmanager.Plugin ):
         if not tools.check_x_server():
             return False
 
-        if len( tools.read_command_output( "ksmserver --version | grep \"KDE: 4.\"" ) ) <= 0:
-            return False
+        kde4_found = False
+        ksmserver_version = tools.read_command_output("ksmserver --version")
+        for line in ksmserver_version.split('\n'):
+            if 'kde' in line.lower():
+                m = re.match(r'\D*([\d\.]+).*', line)
+                if m and StrictVersion(m.group(1)) >= StrictVersion('4.0'):
+                    kde4_found = True
+                    break
 
-        return True
+        return kde4_found
     
     def is_gui( self ):
         return True
