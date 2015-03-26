@@ -46,6 +46,7 @@ import logviewdialog
 import restoredialog
 import messagebox
 
+from treesortfilter import *
 
 _=gettext.gettext
 
@@ -162,10 +163,27 @@ class MainWindow( QMainWindow ):
         self.btn_folder_up = self.files_view_toolbar.addAction(icon.UP, _('Up'))
         self.btn_folder_up.setShortcut(Qt.Key_Backspace)
         QObject.connect( self.btn_folder_up, SIGNAL('triggered()'), self.on_btn_folder_up_clicked )
+        self.btn_expand_all_from_here = self.files_view_toolbar.addAction(icon.EXPANDALL, _('Expand Tree'))
+        self.btn_expand_all_from_here.setToolTip(_('Fully expand the directory tree below this directory.\nCould take a long time if there are many files/folders!'))
+        QObject.connect( self.btn_expand_all_from_here, SIGNAL('triggered()'), self.on_btn_expand_all_from_here_clickd )
 
         self.edit_current_path = QLineEdit( self )
         self.edit_current_path.setReadOnly( True )
         self.files_view_toolbar.addWidget( self.edit_current_path )
+
+        self.files_view_toolbar.addSeparator()
+
+        self.search_filter_line_edit = QLineEdit( self )
+        self.files_view_toolbar.addWidget( self.search_filter_line_edit )
+        self.search_filter_line_edit.setPlaceholderText( 'Search pattern ...' )
+        self.search_filter_line_edit.setToolTip( 'Enter a search pattern.\nWildcard characters are allowed.\nSearch is case-insensitive.' )
+        self.search_filter_line_edit.setSizePolicy( QSizePolicy.Maximum, QSizePolicy.Fixed )
+        #self.search_filter_line_edit.setClearButtonEnabled( True ) # for >=qt5.2
+        self.btn_find = self.files_view_toolbar.addAction(icon.FIND, _('Find'))
+        QObject.connect( self.btn_find, SIGNAL('triggered()'), self.on_btn_find_clicked )
+        QObject.connect( self.search_filter_line_edit, SIGNAL('returnPressed()'), self.on_search_filter_return_pressed )
+
+        self.files_view_toolbar.addSeparator()
 
         #show hidden files
         self.show_hidden_files = self.config.get_bool_value( 'qt4.show_hidden_files', False )
@@ -287,10 +305,10 @@ class MainWindow( QMainWindow ):
         #list files view
         self.list_files_view = QTreeView( self )
         self.files_view_layout.addWidget( self.list_files_view )
-        self.list_files_view.setRootIsDecorated( False )
+        self.list_files_view.setRootIsDecorated( True )
         self.list_files_view.setAlternatingRowColors( True )
         self.list_files_view.setEditTriggers( QAbstractItemView.NoEditTriggers )
-        self.list_files_view.setItemsExpandable( False )
+        self.list_files_view.setItemsExpandable( True )
         self.list_files_view.setDragEnabled( False )
         self.list_files_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
@@ -305,9 +323,10 @@ class MainWindow( QMainWindow ):
         self.list_files_view_model.setFilter(QDir.AllDirs | QDir.AllEntries
                                             | QDir.NoDotAndDotDot | QDir.Hidden)
 
-        self.list_files_view_proxy_model = QSortFilterProxyModel()
-        self.list_files_view_proxy_model.setDynamicSortFilter(True)
+        self.list_files_view_proxy_model = TreeSortFilter()
         self.list_files_view_proxy_model.setSourceModel(self.list_files_view_model)
+        self.list_files_view_proxy_model.setFilterKeyColumn(0)
+        self.list_files_view_proxy_model.setDynamicSortFilter(True)
 
         self.list_files_view.setModel(self.list_files_view_proxy_model)
 
@@ -431,6 +450,7 @@ class MainWindow( QMainWindow ):
         QObject.connect( self.list_time_line, SIGNAL('itemSelectionChanged()'), self.on_list_time_line_current_item_changed )
         QObject.connect( self.list_places, SIGNAL('currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)'), self.on_list_places_current_item_changed )
         QObject.connect( self.list_files_view, SIGNAL('activated(const QModelIndex&)'), self.on_list_files_view_item_activated )
+        QObject.connect(self.list_files_view_model, SIGNAL('directoryLoaded(QString)'),self.model_directoryLoaded)
 
         self.force_wait_lock_counter = 0
 
@@ -1124,6 +1144,50 @@ class MainWindow( QMainWindow ):
                         self.update_files_view( 2 )
                         break
 
+    # Begin: Kodanda
+    def on_search_filter_return_pressed( self ):
+        self.on_btn_find_clicked()
+        return
+
+    def on_btn_find_clicked( self ):
+        filterExp = self.search_filter_line_edit.text()
+        cur_snapshot_root_index = self.list_files_view_model.index( self.cur_snapshot_root_path )
+        print('cut_snp_root', self.cur_snapshot_root_path)
+        self.list_files_view_proxy_model.setFilterRegExp( QRegExp(filterExp, 
+                                                          Qt.CaseInsensitive, 
+                                                          QRegExp.WildcardUnix) )
+        proxy_model_root_index = self.list_files_view_proxy_model.mapFromSource( cur_snapshot_root_index )
+        self.list_files_view.setRootIndex( proxy_model_root_index )
+        self.list_files_view.show()
+        #self.list_files_view.expandAll()
+        
+        if proxy_model_root_index.isValid():
+            self.status.setText('Found some files/folders')
+        else:
+            # message no matching files found
+            self.status.setText('No matches found! Try another backup folder or snapshot.')
+            self.remove_filters_and_refresh()
+    
+    def remove_filters_and_refresh(self):
+        self.list_files_view_proxy_model.invalidateFilter()
+        filterExp = '*'
+        self.search_filter_line_edit.setText('')
+
+        self.list_files_view_model.setFilter(QDir.AllDirs | QDir.AllEntries
+                                            | QDir.NoDotAndDotDot | QDir.Hidden)
+
+        cur_snapshot_root_index = self.list_files_view_model.index( self.cur_snapshot_root_path )
+        self.list_files_view_proxy_model.setFilterRegExp( QRegExp(filterExp, 
+                                                          Qt.CaseInsensitive, 
+                                                          QRegExp.WildcardUnix) )
+        proxy_model_root_index = self.list_files_view_proxy_model.mapFromSource( cur_snapshot_root_index )
+        self.list_files_view.setRootIndex( proxy_model_root_index )
+        self.list_files_view.show()
+        #self.list_files_view.expandAll()
+        return
+    # End: Kodanda
+
+
     def on_btn_folder_up_clicked( self ):
         if len( self.path ) <= 1:
             return
@@ -1197,6 +1261,8 @@ class MainWindow( QMainWindow ):
 
         #update files view
         full_path = self.snapshots.get_snapshot_path_to( self.snapshot_id, self.path )
+        #self.cur_snapshot_root_path =  self.snapshots.get_snapshot_path_to( self.snapshot_id, '' )
+        self.cur_snapshot_root_path = full_path
 
         if os.path.isdir( full_path ):
             if self.show_hidden_files:
@@ -1228,6 +1294,16 @@ class MainWindow( QMainWindow ):
 
         #update folder_up button state
         self.btn_folder_up.setEnabled( len( self.path ) > 1 )
+
+    def model_directoryLoaded(self, loadedDir):
+        #self.list_files_view.expandAll()
+        self.status.setText(_('Loaded: '+ loadedDir))
+
+    def on_btn_expand_all_from_here_clickd(self):
+        if(self.cur_snapshot_root_path == '/'):
+            self.status.setText('Expanding root directory disabled')
+        else:
+            self.list_files_view.expandAll()
 
     def on_dir_lister_completed( self ):
         has_files = (self.list_files_view_proxy_model.rowCount(self.list_files_view.rootIndex() ) > 0 )

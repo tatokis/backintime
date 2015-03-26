@@ -22,7 +22,8 @@ for theme in ('ubuntu-mono-dark', 'gnome', 'oxygen'):
     QIcon.setThemeName(theme)
 
 #BackInTime Logo
-BIT_LOGO            = QIcon.fromTheme('document-save')
+#BIT_LOGO            = QIcon.fromTheme('document-save') 
+BIT_LOGO            = QIcon.fromTheme('edit-clear-history') # Kodanda: a nice icon in kde4
 BIT_LOGO_INFO       = QIcon.fromTheme('document-save-as')
 
 #Main toolbar
@@ -55,6 +56,8 @@ BUG                 = QIcon.fromTheme('stock_dialog-error',
 ABOUT               = QIcon.fromTheme('help-about')
 
 #Files toolbar
+EXPANDALL           = QIcon.fromTheme('go-last-view')
+FIND                = QIcon.fromTheme('edit-find')
 UP                  = QIcon.fromTheme('go-up')
 SHOW_HIDDEN         = QIcon.fromTheme('list-add')
 RESTORE             = QIcon.fromTheme('edit-undo')
