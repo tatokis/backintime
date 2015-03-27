@@ -27,7 +27,8 @@ BIT_LOGO            = QIcon.fromTheme('edit-clear-history') # Kodanda: a nice ic
 BIT_LOGO_INFO       = QIcon.fromTheme('document-save-as')
 
 #Main toolbar
-TAKE_SNAPSHOT       = BIT_LOGO
+#TAKE_SNAPSHOT       = QIcon.fromTheme('camera-photo')
+TAKE_SNAPSHOT       = QIcon.fromTheme('document-save')
 REFRESH_SNAPSHOT    = QIcon.fromTheme('view-refresh')
 SNAPSHOT_NAME       = QIcon.fromTheme('stock_edit',
                       QIcon.fromTheme('gtk-edit',

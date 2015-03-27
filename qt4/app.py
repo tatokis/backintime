@@ -1,5 +1,6 @@
 #    Back In Time
-#    Copyright (C) 2008-2015 Oprea Dan, Bart de Koning, Richard Bailey, Germar Reitze
+#    Copyright (C) 2008-2015 Oprea Dan, Bart de Koning, Richard Bailey, Germar Reitze, 
+#                            Kodanda Ram Mangipudi
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -202,15 +203,15 @@ class MainWindow( QMainWindow ):
         self.btn_restore_to = self.menu_restore.addAction(icon.RESTORE_TO, _('Restore to ...') )
         QObject.connect( self.btn_restore_to, SIGNAL('triggered()'), self.restore_this_to )
         self.menu_restore.addSeparator()
-        self.menu_restore_parent = self.menu_restore.addAction(icon.RESTORE, '' )
-        QObject.connect( self.menu_restore_parent, SIGNAL('triggered()'), self.restore_parent )
-        self.menu_restore_parent_to = self.menu_restore.addAction(icon.RESTORE_TO, '' )
-        QObject.connect( self.menu_restore_parent_to, SIGNAL('triggered()'), self.restore_parent_to )
+        #self.menu_restore_parent = self.menu_restore.addAction(icon.RESTORE, '' )
+        #QObject.connect( self.menu_restore_parent, SIGNAL('triggered()'), self.restore_parent )
+        #self.menu_restore_parent_to = self.menu_restore.addAction(icon.RESTORE_TO, '' )
+        #QObject.connect( self.menu_restore_parent_to, SIGNAL('triggered()'), self.restore_parent_to )
         self.menu_restore.addSeparator()
         self.btn_restore_delete = self.menu_restore.addAction(icon.RESTORE, _('Restore and delete new files'))
         QObject.connect(self.btn_restore_delete, SIGNAL('triggered()'), lambda: self.restore_this(True))
-        self.menu_restore_parent_delete = self.menu_restore.addAction(icon.RESTORE, '')
-        QObject.connect(self.menu_restore_parent_delete, SIGNAL('triggered()'), lambda: self.restore_parent(True))
+        #self.menu_restore_parent_delete = self.menu_restore.addAction(icon.RESTORE, '')
+        #QObject.connect(self.menu_restore_parent_delete, SIGNAL('triggered()'), lambda: self.restore_parent(True))
 
         self.btn_restore_menu = self.files_view_toolbar.addAction(icon.RESTORE, _('Restore'))
         self.btn_restore_menu.setMenu(self.menu_restore)
@@ -249,12 +250,12 @@ class MainWindow( QMainWindow ):
         self.menubar_restore = self.menubar.addMenu(_('Restore'))
         self.menubar_restore.addAction(self.btn_restore)
         self.menubar_restore.addAction(self.btn_restore_to)
-        self.menubar_restore.addSeparator()
-        self.menubar_restore.addAction(self.menu_restore_parent)
-        self.menubar_restore.addAction(self.menu_restore_parent_to)
+        #self.menubar_restore.addSeparator()
+        #self.menubar_restore.addAction(self.menu_restore_parent)
+        #self.menubar_restore.addAction(self.menu_restore_parent_to)
         self.menubar_restore.addSeparator()
         self.menubar_restore.addAction(self.btn_restore_delete)
-        self.menubar_restore.addAction(self.menu_restore_parent_delete)
+        #self.menubar_restore.addAction(self.menu_restore_parent_delete)
 
         self.menubar_help = self.menubar.addMenu(_('Help'))
         self.menubar_help.addAction(self.btn_help)
@@ -1076,9 +1077,14 @@ class MainWindow( QMainWindow ):
             return
 
         selected_file = [f for f, idx in self.multi_file_selected()]
+        current_mode = self.config.get_snapshots_mode()
+        snp_data_path = self.snapshots._get_snapshot_data_path(self.snapshot_id, current_mode)
+        selected_file_abspath = [self.get_absolute_path_backedup_items(idx) for f, idx in self.multi_file_selected()]
+
         if not selected_file:
             return
-        rel_path = [os.path.join(self.path, x) for x in selected_file]
+        #rel_path = [os.path.join(self.path, x) for x in selected_file]
+        rel_path = ['/'+os.path.relpath(x, snp_data_path) for x in selected_file_abspath]
 
         if delete:
             if not self.confirm_delete_on_restore(rel_path, any([i == '/' for i in selected_file]) ):
@@ -1089,41 +1095,52 @@ class MainWindow( QMainWindow ):
 
         restoredialog.restore( self, self.snapshot_id, rel_path, delete = delete)
 
+    # returns the absolute path of the selected item (file/folder), in the current snapshot_id
+    def get_absolute_path_backedup_items(self, proxy_idx):
+        source_idx = self.list_files_view_proxy_model.mapToSource(proxy_idx)
+        abs_path_selected_item = self.list_files_view_model.filePath( source_idx )
+        return abs_path_selected_item
+
     def restore_this_to( self ):
         if len( self.snapshot_id ) <= 1:
             return
 
         selected_file = [f for f, idx in self.multi_file_selected()]
+        current_mode = self.config.get_snapshots_mode()
+        snp_data_path = self.snapshots._get_snapshot_data_path(self.snapshot_id, current_mode)
+        selected_file_abspath = [self.get_absolute_path_backedup_items(idx) for f, idx in self.multi_file_selected()]
+
         if not selected_file:
             return
-        rel_path = [os.path.join(self.path, x) for x in selected_file]
+        #rel_path = [os.path.join(self.path, x) for x in selected_file]
+        rel_path = ['/'+os.path.relpath(x, snp_data_path) for x in selected_file_abspath]
         
         if not self.confirm_restore(rel_path):
             return
 
         restoredialog.restore( self, self.snapshot_id, rel_path, None )
 
-    def restore_parent( self, delete = False ):
-        if len( self.snapshot_id ) <= 1:
-            return
-
-        if delete:
-            if not self.confirm_delete_on_restore((self.path,), self.path == '/'):
-                return
-        else:
-            if not self.confirm_restore((self.path,)):
-                return
-
-        restoredialog.restore( self, self.snapshot_id, self.path, delete = delete)
-
-    def restore_parent_to( self ):
-        if len( self.snapshot_id ) <= 1:
-            return
-
-        if not self.confirm_restore((self.path,)):
-            return
-
-        restoredialog.restore( self, self.snapshot_id, self.path, None )
+#    def restore_parent( self, delete = False ):
+#        if len( self.snapshot_id ) <= 1:
+#            return
+#
+#        if delete:
+#            if not self.confirm_delete_on_restore((self.path,), self.path == '/'):
+#                return
+#        else:
+#            if not self.confirm_restore((self.path,)):
+#                return
+#
+#        restoredialog.restore( self, self.snapshot_id, self.path, delete = delete)
+#
+#    def restore_parent_to( self ):
+#        if len( self.snapshot_id ) <= 1:
+#            return
+#
+#        if not self.confirm_restore((self.path,)):
+#            return
+#
+#        restoredialog.restore( self, self.snapshot_id, self.path, None )
 
     def on_btn_snapshots_clicked( self ):
         selected_file, idx = self.file_selected()
@@ -1152,7 +1169,6 @@ class MainWindow( QMainWindow ):
     def on_btn_find_clicked( self ):
         filterExp = self.search_filter_line_edit.text()
         cur_snapshot_root_index = self.list_files_view_model.index( self.cur_snapshot_root_path )
-        print('cut_snp_root', self.cur_snapshot_root_path)
         self.list_files_view_proxy_model.setFilterRegExp( QRegExp(filterExp, 
                                                           Qt.CaseInsensitive, 
                                                           QRegExp.WildcardUnix) )
@@ -1261,7 +1277,6 @@ class MainWindow( QMainWindow ):
 
         #update files view
         full_path = self.snapshots.get_snapshot_path_to( self.snapshot_id, self.path )
-        #self.cur_snapshot_root_path =  self.snapshots.get_snapshot_path_to( self.snapshot_id, '' )
         self.cur_snapshot_root_path = full_path
 
         if os.path.isdir( full_path ):
@@ -1288,9 +1303,9 @@ class MainWindow( QMainWindow ):
 
         #show current path
         self.edit_current_path.setText( self.path )
-        self.menu_restore_parent.setText( _("Restore '%s'") % self.path )
-        self.menu_restore_parent_to.setText( _("Restore '%s' to ...") % self.path )
-        self.menu_restore_parent_delete.setText( _("Restore '%s' and delete new files") % self.path )
+        #self.menu_restore_parent.setText( _("Restore '%s'") % self.path )
+        #self.menu_restore_parent_to.setText( _("Restore '%s' to ...") % self.path )
+        #self.menu_restore_parent_delete.setText( _("Restore '%s' and delete new files") % self.path )
 
         #update folder_up button state
         self.btn_folder_up.setEnabled( len( self.path ) > 1 )
@@ -1301,7 +1316,7 @@ class MainWindow( QMainWindow ):
 
     def on_btn_expand_all_from_here_clickd(self):
         if(self.cur_snapshot_root_path == '/'):
-            self.status.setText('Expanding root directory disabled')
+            self.status.setText('Expanding root directory is disabled for performance reasons!')
         else:
             self.list_files_view.expandAll()
 

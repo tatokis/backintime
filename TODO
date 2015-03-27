@@ -2,4 +2,9 @@ TODO:
 * use rsync return code to check that the snapshot was really taken (no out of space, copy error ...)
 * uid/gid translate table with 'Full rsync mode'
 * hide failure msg for restore perms if perms are identical
-
+TODO/Kodanda:
+* create a background thread to fully populate the directory tree recursively. 
+  (might need to subclass QFileSystemModel and use canFetchMore and override fetchMore)
+* add a status indicator and warning for incomplete search results while the filemodel
+  keeps loading.
+* dolphin integration service menus with restore functionality
