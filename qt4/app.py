@@ -152,6 +152,8 @@ class MainWindow( QMainWindow ):
 
         #right widget
         self.right_widget = QGroupBox( self )
+        self.right_widget.setAlignment(Qt.AlignLeft)
+        self.right_widget.setStyleSheet("QGroupBox {font-weight:bold; } ")
         self.main_splitter.addWidget( self.right_widget )
         right_layout = QVBoxLayout( self.right_widget )
         left, top, right, bottom = right_layout.getContentsMargins()
@@ -161,23 +163,27 @@ class MainWindow( QMainWindow ):
         self.files_view_toolbar = QToolBar( self )
         self.files_view_toolbar.setFloatable( False )
 
-        self.btn_folder_up = self.files_view_toolbar.addAction(icon.UP, _('Up'))
-        self.btn_folder_up.setShortcut(Qt.Key_Backspace)
-        QObject.connect( self.btn_folder_up, SIGNAL('triggered()'), self.on_btn_folder_up_clicked )
-        self.btn_expand_all_from_here = self.files_view_toolbar.addAction(icon.EXPANDALL, _('Expand Tree'))
-        self.btn_expand_all_from_here.setToolTip(_('Fully expand the directory tree below this directory.\nCould take a long time if there are many files/folders!'))
-        QObject.connect( self.btn_expand_all_from_here, SIGNAL('triggered()'), self.on_btn_expand_all_from_here_clickd )
+        #self.view_time_label = QLabel( self )
+        #self.view_time_label.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        #self.files_view_toolbar.addWidget( self.view_time_label )
 
         self.edit_current_path = QLineEdit( self )
         self.edit_current_path.setReadOnly( True )
         self.files_view_toolbar.addWidget( self.edit_current_path )
+
+        self.btn_expand_all_from_here = self.files_view_toolbar.addAction(icon.EXPANDALL, _('Expand Tree'))
+        self.btn_expand_all_from_here.setToolTip(_('Fully expands the directory tree below this directory.\n\u26A0 Could take a long time if there are many files/folders!\nThis is necessary if you want to search in all the subdirectories.'))
+        QObject.connect( self.btn_expand_all_from_here, SIGNAL('triggered()'), self.on_btn_expand_all_from_here_clickd )
+        self.btn_folder_up = self.files_view_toolbar.addAction(icon.UP, _('Up'))
+        self.btn_folder_up.setShortcut(Qt.Key_Backspace)
+        QObject.connect( self.btn_folder_up, SIGNAL('triggered()'), self.on_btn_folder_up_clicked )
 
         self.files_view_toolbar.addSeparator()
 
         self.search_filter_line_edit = QLineEdit( self )
         self.files_view_toolbar.addWidget( self.search_filter_line_edit )
         self.search_filter_line_edit.setPlaceholderText( 'Search pattern ...' )
-        self.search_filter_line_edit.setToolTip( 'Enter a search pattern.\nWildcard characters are allowed.\nSearch is case-insensitive.' )
+        self.search_filter_line_edit.setToolTip( 'Enter a search pattern.\nWildcard characters are allowed.\nSearch is case-insensitive.\n\u26A0 Serch results will be complete only when\nthe directory tree is fully expanded.' )
         self.search_filter_line_edit.setSizePolicy( QSizePolicy.Maximum, QSizePolicy.Fixed )
         #self.search_filter_line_edit.setClearButtonEnabled( True ) # for >=qt5.2
         self.btn_find = self.files_view_toolbar.addAction(icon.FIND, _('Find'))
@@ -1147,7 +1153,11 @@ class MainWindow( QMainWindow ):
         if not selected_file:
             return
 
-        rel_path = os.path.join( self.path, selected_file )
+        current_mode = self.config.get_snapshots_mode()
+        snp_data_path = self.snapshots._get_snapshot_data_path(self.snapshot_id, current_mode)
+        selected_file_abspath = self.get_absolute_path_backedup_items(idx)
+        rel_path = '/'+os.path.relpath(selected_file_abspath, snp_data_path)
+        #rel_path = os.path.join( self.path, selected_file )
 
         dlg = snapshotsdialog.SnapshotsDialog( self, self.snapshot_id, rel_path)
         if QDialog.Accepted == dlg.exec_():
@@ -1268,6 +1278,8 @@ class MainWindow( QMainWindow ):
 
         self.right_widget.setTitle( _( text ) )
         self.right_widget.setToolTip( _( tooltip ) )
+        #self.view_time_label.setText(_( text ) )
+        #self.view_time_label.setToolTip( _( tooltip ) )
 
         #try to keep old selected file
         if selected_file is None:
