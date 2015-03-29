@@ -57,6 +57,7 @@ BUG                 = QIcon.fromTheme('stock_dialog-error',
 ABOUT               = QIcon.fromTheme('help-about')
 
 #Files toolbar
+COLLAPSEALL         = QIcon.fromTheme('go-first-view')
 EXPANDALL           = QIcon.fromTheme('go-last-view')
 FIND                = QIcon.fromTheme('edit-find')
 UP                  = QIcon.fromTheme('go-up')

@@ -167,6 +167,10 @@ class MainWindow( QMainWindow ):
         #self.view_time_label.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         #self.files_view_toolbar.addWidget( self.view_time_label )
 
+        self.btn_folder_up = self.files_view_toolbar.addAction(icon.UP, _('Up'))
+        self.btn_folder_up.setShortcut(Qt.Key_Backspace)
+        QObject.connect( self.btn_folder_up, SIGNAL('triggered()'), self.on_btn_folder_up_clicked )
+
         self.edit_current_path = QLineEdit( self )
         self.edit_current_path.setReadOnly( True )
         self.files_view_toolbar.addWidget( self.edit_current_path )
@@ -174,10 +178,9 @@ class MainWindow( QMainWindow ):
         self.btn_expand_all_from_here = self.files_view_toolbar.addAction(icon.EXPANDALL, _('Expand Tree'))
         self.btn_expand_all_from_here.setToolTip(_('Fully expands the directory tree below this directory.\n\u26A0 Could take a long time if there are many files/folders!\nThis is necessary if you want to search in all the subdirectories.'))
         QObject.connect( self.btn_expand_all_from_here, SIGNAL('triggered()'), self.on_btn_expand_all_from_here_clickd )
-        self.btn_folder_up = self.files_view_toolbar.addAction(icon.UP, _('Up'))
-        self.btn_folder_up.setShortcut(Qt.Key_Backspace)
-        QObject.connect( self.btn_folder_up, SIGNAL('triggered()'), self.on_btn_folder_up_clicked )
-
+        self.btn_collapse_all_from_here = self.files_view_toolbar.addAction(icon.COLLAPSEALL, _('Collapse Tree'))
+        self.btn_collapse_all_from_here.setToolTip(_('Fully collpse the directory tree below this directory.'))
+        QObject.connect( self.btn_collapse_all_from_here, SIGNAL('triggered()'), self.on_btn_collapse_all_from_here_clickd )
         self.files_view_toolbar.addSeparator()
 
         self.search_filter_line_edit = QLineEdit( self )
@@ -1323,7 +1326,6 @@ class MainWindow( QMainWindow ):
         self.btn_folder_up.setEnabled( len( self.path ) > 1 )
 
     def model_directoryLoaded(self, loadedDir):
-        #self.list_files_view.expandAll()
         self.status.setText(_('Loaded: '+ loadedDir))
 
     def on_btn_expand_all_from_here_clickd(self):
@@ -1331,6 +1333,9 @@ class MainWindow( QMainWindow ):
             self.status.setText('Expanding root directory is disabled for performance reasons!')
         else:
             self.list_files_view.expandAll()
+
+    def on_btn_collapse_all_from_here_clickd(self):
+        self.list_files_view.collapseAll()
 
     def on_dir_lister_completed( self ):
         has_files = (self.list_files_view_proxy_model.rowCount(self.list_files_view.rootIndex() ) > 0 )
