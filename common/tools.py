@@ -458,11 +458,7 @@ def check_cron_pattern(str):
 
 def check_mountpoint(path):
     '''return True if path is a mountpoint'''
-    try:
-        subprocess.check_call(['mountpoint', path], stdout=open(os.devnull, 'w'))
-    except subprocess.CalledProcessError:
-        return False
-    return True
+    return os.path.ismount(path)
 
 def check_home_encrypt():
     '''return True if users home is encrypted'''
