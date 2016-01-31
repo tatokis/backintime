@@ -14,7 +14,6 @@ python:
 
 before_install:
   - sudo groupadd newtravisgroup
-  - touch me
   - groups
   - whoami
   - sudo usermod -a -G newtravisgroup travis
@@ -23,11 +22,12 @@ install:
   - pip install coveralls
   - groups
   - groups travis
-  - getent passwd
+  - getent group
   - cat /etc/group
-  - touch me
+  - touch newfile
   - whoami
-  - chgrp newtravisgroup me
+  - chgrp newtravisgroup newfile | echo "0"
+  - chgrp me newfile | echo "0"
 
 script:
   # compile all files - ensure that syntax is correct
