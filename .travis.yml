@@ -22,6 +22,8 @@ install:
   - pip install coveralls
   - groups
   - groups travis
+  - getent passwd
+  - cat /etc/group
   - touch me
   - chgrp mail me
 
