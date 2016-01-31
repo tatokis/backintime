@@ -16,6 +16,7 @@ before_install:
   - sudo groupadd newtravisgroup
   - touch me
   - groups
+  - whoami
   - sudo usermod -a -G newtravisgroup travis
 
 install:
@@ -25,7 +26,8 @@ install:
   - getent passwd
   - cat /etc/group
   - touch me
-  - chgrp mail me
+  - whoami
+  - chgrp newtravisgroup me
 
 script:
   # compile all files - ensure that syntax is correct
