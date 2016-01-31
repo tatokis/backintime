@@ -14,6 +14,8 @@ python:
 
 before_install:
   - sudo gpasswd -a travis mail
+  - touch me
+  - chgrp mail me
 
 install:
   - pip install coveralls

@@ -445,6 +445,7 @@ class Snapshots:
             #if restore uid/gid failed try to restore at least gid
             if not ok and gid != st.st_gid:
                 try:
+                    print("current group: " + os.stat(path).st_gid)
                     os.chown( path, -1, gid )
                     ok = True
                 except:
