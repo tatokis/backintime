@@ -18,6 +18,7 @@ before_install:
   - whoami
   - sudo usermod -a -G newtravisgroup travis
   - sudo usermod -a -G me travis
+  - sudo usermod -a -G newtravisgroup,me $USER
 
 install:
   - pip install coveralls
