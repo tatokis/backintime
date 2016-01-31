@@ -449,6 +449,8 @@ class Snapshots:
                     ok = True
                 except:
                     print("setting gid failed")
+                    import traceback
+                    traceback.print_exc()
                     pass
                 self.restore_callback( callback, ok, "chgrp %s %s" % ( path.decode(errors = 'ignore'), gid ) )
 
