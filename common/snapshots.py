@@ -438,6 +438,7 @@ class Snapshots:
                     os.chown( path, uid, gid )
                     ok = True
                 except:
+                    print("setting uid failed")
                     pass
                 self.restore_callback( callback, ok, "chown %s %s : %s" % ( path.decode(errors = 'ignore'), uid, gid ) )
 
@@ -447,6 +448,7 @@ class Snapshots:
                     os.chown( path, -1, gid )
                     ok = True
                 except:
+                    print("setting gid failed")
                     pass
                 self.restore_callback( callback, ok, "chgrp %s %s" % ( path.decode(errors = 'ignore'), gid ) )
 
@@ -457,6 +459,7 @@ class Snapshots:
                 os.chmod( path, info[0] )
                 ok = True
             except:
+                print("setting perms failed")
                 pass
             self.restore_callback( callback, ok, "chmod %s %04o" % ( path.decode(errors = 'ignore'), info[0] ) )
 
