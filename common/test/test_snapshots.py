@@ -41,6 +41,8 @@ CURRENTGROUP = grp.getgrgid(CURRENTGID).gr_name
 
 #all groups the current user is member in
 GROUPS = [i.gr_name for i in grp.getgrall() if CURRENTUSER in i.gr_mem]
+print("all groups")
+print(GROUPS)
 NO_GROUPS = not GROUPS
 
 IS_ROOT = os.geteuid() == 0
@@ -362,6 +364,8 @@ class TestRestorePathInfo(GenericSnapshotsTestCase):
     def test_change_group(self):
         newGroup = GROUPS[0]
         newGID = grp.getgrnam(newGroup).gr_gid
+        print("new group " + newGroup)
+        print("new gid %s" % newGID)
         d = snapshots.FileInfoDict()
         d[b'foo'] = (self.modeFolder, CURRENTUSER.encode('utf-8','replace'), newGroup.encode('utf-8','replace'))
         d[b'bar'] = (self.modeFile, CURRENTUSER.encode('utf-8','replace'), newGroup.encode('utf-8','replace'))
