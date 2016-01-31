@@ -13,10 +13,10 @@ python:
   - "nightly" # currently points to 3.6-dev
 
 before_install:
-  - sudo gpasswd -a travis mail
+  - sudo groupadd newtravisgroup
   - touch me
   - groups
-  - ls -al
+  - sudo gpasswd -a travis newtravisgroup
 
 install:
   - pip install coveralls
