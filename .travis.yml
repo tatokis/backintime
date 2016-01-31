@@ -19,6 +19,7 @@ before_install:
   - sudo usermod -a -G newtravisgroup travis
   - sudo usermod -a -G me travis
   - sudo usermod -a -G newtravisgroup,me $USER
+  - sudo sh -c "echo 0 > /selinux/enforce"
 
 install:
   - pip install coveralls
@@ -28,6 +29,8 @@ install:
   - cat /etc/group
   - touch newfile
   - whoami
+  - ls -al
+  - chgrp travis newfile | echo "0"
   - chgrp newtravisgroup newfile | echo "0"
   - chgrp me newfile | echo "0"
 
