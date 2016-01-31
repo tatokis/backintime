@@ -16,11 +16,12 @@ before_install:
   - sudo groupadd newtravisgroup
   - touch me
   - groups
-  - sudo gpasswd -a travis newtravisgroup
+  - sudo usermod -a -G newtravisgroup travis
 
 install:
   - pip install coveralls
   - groups
+  - groups travis
   - touch me
   - chgrp mail me
 
