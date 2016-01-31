@@ -17,10 +17,12 @@ before_install:
   - touch me
   - groups
   - ls -al
-  - chgrp mail me
 
 install:
   - pip install coveralls
+  - groups
+  - touch me
+  - chgrp mail me
 
 script:
   # compile all files - ensure that syntax is correct
