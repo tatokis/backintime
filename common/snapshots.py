@@ -447,7 +447,7 @@ class Snapshots:
             if not ok and gid != st.st_gid:
                 try:
                     print("trying to change group of %s to %s" % (path, gid))
-                    print os.popen("ls -al " + path).read()
+                    print(os.popen("ls -al " + path).read())
                     os.chown( path, -1, gid )
                     ok = True
                 except:
