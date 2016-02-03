@@ -441,7 +441,7 @@ class Snapshots:
                     ok = True
                 except:
                     pass
-                self.restore_callback( callback, ok, "chown %s %s : %s" % ( path.decode(errors = 'ignore'), uid, gid ) )
+                self.restore_callback( callback, ok, "chown %s %s : %s" % ( path, uid, gid ) )
 
             #if restore uid/gid failed try to restore at least gid
             if not ok and gid != st.st_gid:
@@ -454,7 +454,7 @@ class Snapshots:
                     import traceback
                     traceback.print_exc()
                     pass
-                self.restore_callback( callback, ok, "chgrp %s %s" % ( path.decode(errors = 'ignore'), gid ) )
+                self.restore_callback( callback, ok, "chgrp %s %s" % ( path, gid ) )
 
         #restore perms
         ok = False
@@ -464,7 +464,7 @@ class Snapshots:
                 ok = True
             except:
                 pass
-            self.restore_callback( callback, ok, "chmod %s %04o" % ( path.decode(errors = 'ignore'), info[0] ) )
+            self.restore_callback( callback, ok, "chmod %s %04o" % ( path, info[0] ) )
 
     def restore( self, sid, paths, callback = None, restore_to = '', delete = False, backup = False, no_backup = False):
         instance = applicationinstance.ApplicationInstance( self.config.get_restore_instance_file(), False, flock = True)
