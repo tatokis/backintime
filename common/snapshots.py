@@ -438,20 +438,15 @@ class Snapshots:
                     os.chown( path, uid, gid )
                     ok = True
                 except:
-                    print("setting uid failed")
                     pass
                 self.restore_callback( callback, ok, "chown %s %s : %s" % ( path.decode(errors = 'ignore'), uid, gid ) )
 
             #if restore uid/gid failed try to restore at least gid
             if not ok and gid != st.st_gid:
                 try:
-                    print("current group: " + os.stat(path).st_gid)
                     os.chown( path, -1, gid )
                     ok = True
                 except:
-                    print("setting gid failed")
-                    import traceback
-                    traceback.print_exc()
                     pass
                 self.restore_callback( callback, ok, "chgrp %s %s" % ( path.decode(errors = 'ignore'), gid ) )
 
@@ -462,7 +457,6 @@ class Snapshots:
                 os.chmod( path, info[0] )
                 ok = True
             except:
-                print("setting perms failed")
                 pass
             self.restore_callback( callback, ok, "chmod %s %04o" % ( path.decode(errors = 'ignore'), info[0] ) )
 
