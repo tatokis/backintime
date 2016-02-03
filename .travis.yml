@@ -37,9 +37,9 @@ script:
   - which python3
   - sudo -E su $USER -c 'python --version'
   - sudo -E su $USER -c 'python3 --version'
-  - sudo -E su $USER -c 'which python'
+  - bash -c 'which python3'
   - sudo -E su $USER -c 'which python3' 
-  - sudo -E su $USER -c 'cd common && ./configure && make unittest-v'
+  - bash -c 'cd common && ./configure && make unittest-v'
 
 after_success:
   - coverage combine
