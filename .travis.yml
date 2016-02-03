@@ -33,6 +33,8 @@ script:
   
   #- sudo -E su $USER -c 'python -m compileall common common/test common/plugins qt4 qt4/plugins'
   # run unit tests - ensure that functionality is correct
+  - sudo -E su $USER -c 'python --version'
+  - sudo -E su $USER -c 'python3 --version'
   - sudo -E su $USER -c 'cd common && ./configure && make unittest-v'
 
 after_success:
