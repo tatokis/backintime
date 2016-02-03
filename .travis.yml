@@ -8,9 +8,9 @@ sudo: true
 
 python:
   - "3.4"
-  - "3.5"
-  - "3.5-dev" # 3.5 development branch
-  - "nightly" # currently points to 3.6-dev
+#  - "3.5"
+#  - "3.5-dev" # 3.5 development branch
+#  - "nightly" # currently points to 3.6-dev
 
 before_install:
   - sudo apt-get -qq update
@@ -36,7 +36,9 @@ install:
 
 script:
   # compile all files - ensure that syntax is correct
-  - python -m compileall common common/test common/plugins qt4 qt4/plugins
+  - chgrp travis newfile | echo "0"
+  - sh -c "chgrp newtravisgroup newfile | echo 0"
+  - sh -c "python -m compileall common common/test common/plugins qt4 qt4/plugins"
   # run unit tests - ensure that functionality is correct
   - cd common && ./configure && make unittest-v
 
