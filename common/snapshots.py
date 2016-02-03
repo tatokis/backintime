@@ -444,9 +444,13 @@ class Snapshots:
             #if restore uid/gid failed try to restore at least gid
             if not ok and gid != st.st_gid:
                 try:
+                    print("trying to change group of %s to %s" % (path, gid))
                     os.chown( path, -1, gid )
                     ok = True
                 except:
+                    print("Could not change group")
+                    import traceback
+                    traceback.print_exc()
                     pass
                 self.restore_callback( callback, ok, "chgrp %s %s" % ( path.decode(errors = 'ignore'), gid ) )
 
