@@ -25,18 +25,18 @@ install:
 
 script:
   # compile all files - ensure that syntax is correct
-  - mkdir newfile2
-  - ls -al .
+  #- mkdir newfile2
+  #- ls -al .
   - pwd
   #- sudo -E su $USER -c "echo -e \"import os\nos.chown( 'newfile2', -1, 104 )\" | python"
-  - sudo -E su $USER -c "env"
-  - bash --login -c "env"
-  - env
-  - sudo -E su $USER -c "bash --login -c 'env'"
-  - bash --login -c "chgrp fuse newfile2"
-  - sudo -E su $USER -c "bash --login -c 'chgrp fuse newfile2'"
-  - ls -al .
-  - sudo -E su $USER -c "bash --login -c 'python --version'"
+  #- sudo -E su $USER -c "env"
+  #- bash --login -c "env"
+  #- env
+  ##- sudo -E su $USER -c "bash --login -c 'env'"
+  #- bash --login -c "chgrp fuse newfile2"
+  #- sudo -E su $USER -c "bash --login -c 'chgrp fuse newfile2'"
+  #- ls -al .
+  #- sudo -E su $USER -c "bash --login -c 'python --version'"
   
   #- sudo -E su $USER -c 'python -m compileall common common/test common/plugins qt4 qt4/plugins'
   # run unit tests - ensure that functionality is correct
@@ -46,7 +46,7 @@ script:
   #- sudo -E su $USER -c 'python3 --version'
   #- bash -c 'which python3'
   #- sudo -E su $USER -c -l 'which python3'
-  - sudo -E su $USER -c "bash --login -c 'cd build/bit-team/backintime/common && ./configure && make unittest-v'"
+  - sudo -E su $USER -c "bash --login -c 'cd /home/travis/build/bit-team/backintime/common && ./configure && make unittest-v'"
 
 after_success:
   - coverage combine
