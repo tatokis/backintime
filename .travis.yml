@@ -38,8 +38,11 @@ script:
   # compile all files - ensure that syntax is correct
   - touch newfile2
   - ls -al newfile2
-  - sudo -E su $USER -c 'chgrp newtravisgroup newfile2'
-  - ls -al newfile2
+  - getent group
+  # - sudo -E su $USER -c 'chgrp newtravisgroup newfile2'
+  - sudo -E su $USER -c "echo -e \"import os\nos.chown( 'testfile', -1, 104 )\" | python"
+ - ls -al newfile2
+  
   - sudo -E su $USER -c 'python -m compileall common common/test common/plugins qt4 qt4/plugins'
   # run unit tests - ensure that functionality is correct
   - cd common && ./configure && make unittest-v
