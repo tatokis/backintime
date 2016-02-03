@@ -38,7 +38,7 @@ script:
   - sudo -E su $USER -c 'python --version'
   - sudo -E su $USER -c 'python3 --version'
   - bash -c 'which python3'
-  - sudo -E su $USER -c 'which python3' 
+  - sudo -E su $USER -c -l 'which python3' 
   - sudo -E su - $USER -c -l 'cd common && ./configure && make unittest-v'
 
 after_success:
