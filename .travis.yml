@@ -25,11 +25,12 @@ install:
 
 script:
   # compile all files - ensure that syntax is correct
-  #- mkdir newfile2
-  #- ls -al newfile2
-  #- pwd
+  - mkdir newfile2
+  - ls -al newfile2
+  - pwd
   #- sudo -E su $USER -c "echo -e \"import os\nos.chown( 'newfile2', -1, 104 )\" | python"
-
+  - bash --login -c "chgrp fuse newfile"
+  - ls -al newfile2
   
   #- sudo -E su $USER -c 'python -m compileall common common/test common/plugins qt4 qt4/plugins'
   # run unit tests - ensure that functionality is correct
