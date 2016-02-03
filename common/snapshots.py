@@ -392,7 +392,7 @@ class Snapshots:
                 self.restore_permission_failed = True
             callback( msg )
 
-    def _restore_path_info( self, key_path, path, fileInfoDict, callback = None ):
+    def _restore_path_info( self, key_path, path_bytes, fileInfoDict, callback = None ):
         """
         Restore permissions (owner, group and mode). If permissions are
         already identical with the new ones just skip. Otherwise try to
@@ -408,11 +408,13 @@ class Snapshots:
             fileInfoDict (FileInfoDict):    FileInfoDict
         """
         assert isinstance(key_path, bytes), 'key_path is not bytes type: %s' % key_path
-        assert isinstance(path, bytes), 'path is not bytes type: %s' % path
+        assert isinstance(path_bytes, bytes), 'path is not bytes type: %s' % path_bytes
         assert isinstance(fileInfoDict, FileInfoDict), 'fileInfoDict is not FileInfoDict type: %s' % fileInfoDict
-        if key_path not in fileInfoDict or not os.path.exists(path):
+        if key_path not in fileInfoDict or not os.path.exists(path_bytes):
             return
         info = fileInfoDict[key_path]
+        
+        path = path_bytes.decode()
 
         #restore uid/gid
         uid = self.get_uid(info[1], callback)
