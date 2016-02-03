@@ -38,6 +38,7 @@ script:
   # compile all files - ensure that syntax is correct
   - touch newfile2
   - sudo -E su $USER -c 'chgrp travis newfile2 | echo 0'
+  - sudo -E su $USER -c 'groups'
   - sudo -E su $USER -c 'python -m compileall common common/test common/plugins qt4 qt4/plugins'
   # run unit tests - ensure that functionality is correct
   - cd common && ./configure && make unittest-v
