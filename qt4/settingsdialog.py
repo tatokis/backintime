@@ -872,12 +872,12 @@ class SettingsDialog( QDialog ):
         scrollArea.setWidgetResizable(True)
 
         #buttons
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent = self)
-        btnRestore = button_box.addButton(_('Restore Config'), QDialogButtonBox.ResetRole)
-        QObject.connect(button_box, SIGNAL('accepted()'), self.accept)
-        QObject.connect(button_box, SIGNAL('rejected()'), self.reject)
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent = self)
+        btnRestore = self.button_box.addButton(_('Restore Config'), QDialogButtonBox.ResetRole)
+        QObject.connect(self.button_box, SIGNAL('accepted()'), self.accept)
+        QObject.connect(self.button_box, SIGNAL('rejected()'), self.reject)
         QObject.connect(btnRestore, SIGNAL('clicked()'), self.restoreConfig)
-        self.main_layout.addWidget(button_box)
+        self.main_layout.addWidget(self.button_box)
 
         self.update_profiles()
         self.on_combo_modes_changed()

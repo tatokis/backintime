@@ -94,6 +94,10 @@ addNewline () {
     printf "\n" >> ${UNINSTALL_DIRS}
 }
 
+onTravis () {
+[ "${TRAVIS}" = "true" ]
+}
+
 #get commandline arguments
 unknown_args=""
 for arg in $*; do
@@ -228,6 +232,42 @@ cat ${UNINSTALL_FILES} >> ${MAKEFILE}
 
 printf "uninstall_dirs:\n" >> ${MAKEFILE}
 cat ${UNINSTALL_DIRS} >> ${MAKEFILE}
+
+#test
+for i in "py.test-3" "py.test-3.6" "py.test-3.5" "py.test-3.4"; do
+    PYTEST=$(which $i 2>/dev/null)
+    if [ -n "${PYTEST}" ]; then
+        break
+    fi
+done
+COVERAGE=$(which coverage 2>/dev/null)
+#use "coverage run" only on travis-ci.org and if it is available
+#this will pass informations to coveralls.io.
+#otherwise use "python", "python3" or if available "py.test-3"
+if onTravis && [ -n "${COVERAGE}" ]; then
+    CMD="coverage run -p"
+else
+    CMD="python${PYVERSION}"
+fi
+
+printf "test:\tunittest\n\n" >> ${MAKEFILE}
+printf "test-v:\tunittest-v\n\n" >> ${MAKEFILE}
+for v in "" "-v"; do
+    #provide unittests with and without verbosity -v
+    printf "unittest${v}:\n" >> ${MAKEFILE}
+    if onTravis || [ -z "${PYTEST}" ]; then
+        #if running on travis-ci.org or if py.test-3 is not available
+        #call every test/test_*.py with $CMD from above
+    	for i in $(ls -1 test/test_*.py); do
+    		printf "\t${CMD} -m unittest ${v} -b $i\n" >> ${MAKEFILE}
+    	done
+    else
+        #else just call py.test-3 which will find test/test_*.py by itself
+        #py.test-3 has a nicer output so this is prefered over simple python3
+        printf "\t${PYTEST} ${v}\n" >> ${MAKEFILE}
+    fi
+    printf "\n" >> ${MAKEFILE}
+done
 
 #copy Makefile
 mv ${MAKEFILE} Makefile

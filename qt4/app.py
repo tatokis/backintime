@@ -475,7 +475,7 @@ class MainWindow( QMainWindow ):
         else:
             self.config.set_current_hash_id(hash_id)
 
-        if not cfg.can_backup( profile_id ):
+        if not self.config.can_backup( profile_id ):
             messagebox.critical( self, _('Can\'t find snapshots folder.\nIf it is on a removable drive please plug it and then press OK') )
 
         QObject.connect(self.list_files_view_proxy_model, SIGNAL('layoutChanged()'), self.on_dir_lister_completed)
@@ -899,12 +899,16 @@ class MainWindow( QMainWindow ):
         thread.refreshSnapshotList.connect(self.update_time_line)
         thread.start()
 
+    def on_accepted_new_settings( self ):
+        profile_id = self.config.get_current_profile()
+        self.remount(profile_id, profile_id)
+        self.update_profiles()
+
     def on_btn_settings_clicked( self ):
         with self.suspendMouseButtonNavigation():
-            if QDialog.Accepted == settingsdialog.SettingsDialog( self ).exec_():
-                profile_id = self.config.get_current_profile()
-                self.remount(profile_id, profile_id)
-                self.update_profiles()
+            self.settingsDialog = settingsdialog.SettingsDialog(self)
+            QObject.connect(self.settingsDialog, SIGNAL('accepted()'), self.on_accepted_new_settings)
+            self.settingsDialog.open()
 
     def on_btn_shutdown_toggled(self, checked):
         self.shutdown.activate_shutdown = checked
@@ -1458,15 +1462,19 @@ if __name__ == '__main__':
     cfg.PLUGIN_MANAGER.on_app_start()
 
     logger.openlog()
+    # step 1 - create QApplication
     qapp = qt4tools.create_qapplication(cfg.APP_NAME)
     translator = qt4tools.get_translator()
     qapp.installTranslator(translator)
 
+    # step 2 - create Widget
     main_window = MainWindow( cfg, app_instance, qapp )
 
     if cfg.is_configured():
         cfg.xWindowId = main_window.winId()
+        # step 3 - show app UI
         main_window.show()
+        # step 4 - start up event handler (block here until app is ready to exit)
         qapp.exec_()
 
     logger.closelog()
