@@ -1,5 +1,8 @@
 Back In Time
 
+Version 1.1.25
+* Fix bug: 23:00 is missing in the list of every day hours (https://github.com/bit-team/backintime/issues/736)
+
 Version 1.1.24
 * fix critical bug: shell injection in notify-send (https://github.com/bit-team/backintime/issues/834)
 

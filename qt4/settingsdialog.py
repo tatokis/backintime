@@ -324,7 +324,7 @@ class SettingsDialog( QDialog ):
         self.combo_automatic_snapshots_time = QComboBox( self )
         glayout.addWidget( self.combo_automatic_snapshots_time, 3, 1 )
 
-        for t in range( 0, 2300, 100 ):
+        for t in range( 0, 2400, 100 ):
             self.combo_automatic_snapshots_time.addItem( QIcon(), datetime.time( t//100, t%100 ).strftime("%H:%M"), t )
 
         self.lbl_automatic_snapshots_time_custom = QLabel( _( 'Hours:' ), self )
