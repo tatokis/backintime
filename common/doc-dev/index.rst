@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to BackInTime's documentation!
-======================================
+Welcome to Back In Time's documentation
+=======================================
 
 Contents:
 
@@ -12,6 +12,8 @@ Contents:
     :maxdepth: 2
 
     modules.rst
+
+    plugins/modules.rst
 
 Indices and tables
 ==================

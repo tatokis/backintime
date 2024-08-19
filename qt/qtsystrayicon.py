@@ -18,32 +18,39 @@
 
 import sys
 import os
-import gettext
 import subprocess
 import signal
+import textwrap
 
-_=gettext.gettext
-
+# TODO Is this really required? If the client is not configured for X11
+#      it may use Wayland or something else...
+#      Or is this just required when run as root (where GUIs are not
+#      configured normally)?
 if not os.getenv('DISPLAY', ''):
     os.putenv('DISPLAY', ':0.0')
 
 import qttools
 qttools.registerBackintimePath('common')
 
-import tools
 import logger
+
+# Workaround until the codebase allows a single place to init all translations
+import tools
+tools.initiate_translation(None)
+
 import snapshots
 import progress
 import logviewdialog
 import encfstools
 
-from PyQt5.QtCore import QObject, QTimer
-from PyQt5.QtWidgets import QSystemTrayIcon, QMenu, QProgressBar, QWidget
-from PyQt5.QtGui import QIcon, QRegion
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QSystemTrayIcon, QMenu, QProgressBar, QWidget
+from PyQt6.QtGui import QRegion
 
 
 class QtSysTrayIcon:
     def __init__(self):
+
         self.snapshots = snapshots.Snapshots()
         self.config = self.snapshots.config
         self.decode = None
@@ -54,19 +61,20 @@ class QtSysTrayIcon:
                                %sys.argv[1], self)
 
         self.qapp = qttools.createQApplication(self.config.APP_NAME)
-        translator = qttools.translator()
+        translator = qttools.initiate_translator(self.config.language())
         self.qapp.installTranslator(translator)
         self.qapp.setQuitOnLastWindowClosed(False)
 
         import icon
-        self.icon = icon
+        self.icon = icon  # What does this code do? Make the import accessible?
         self.qapp.setWindowIcon(icon.BIT_LOGO)
 
         self.status_icon = QSystemTrayIcon(icon.BIT_LOGO)
         #self.status_icon.actionCollection().clear()
         self.contextMenu = QMenu()
 
-        self.menuProfileName = self.contextMenu.addAction(_('Profile: "%s"') % self.config.profileName())
+        self.menuProfileName = self.contextMenu.addAction(
+            _('Profile: {profile_name}').format(profile_name=self.config.profileName()))
         qttools.setFontBold(self.menuProfileName)
         self.contextMenu.addSeparator()
 
@@ -95,7 +103,10 @@ class QtSysTrayIcon:
 
         self.openLog = self.contextMenu.addAction(icon.VIEW_LAST_LOG, _('View Last Log'))
         self.openLog.triggered.connect(self.onOpenLog)
-        self.startBIT = self.contextMenu.addAction(icon.BIT_LOGO, _('Start BackInTime'))
+        self.startBIT = self.contextMenu.addAction(
+            icon.BIT_LOGO,
+            _('Start {appname}').format(appname=self.config.APP_NAME)
+        )
         self.startBIT.triggered.connect(self.onStartBIT)
         self.status_icon.setContextMenu(self.contextMenu)
 
@@ -106,7 +117,11 @@ class QtSysTrayIcon:
         self.progressBar.setValue(0)
         self.progressBar.setTextVisible(False)
         self.progressBar.resize(24, 6)
-        self.progressBar.render(self.pixmap, sourceRegion = QRegion(0, -14, 24, 6), flags = QWidget.RenderFlags(QWidget.DrawChildren))
+        self.progressBar.render(
+            self.pixmap,
+            sourceRegion=QRegion(0, -14, 24, 6),
+            flags=QWidget.RenderFlag.DrawChildren
+        )
 
         self.first_error = self.config.notify()
         self.popup = None
@@ -115,7 +130,7 @@ class QtSysTrayIcon:
         self.timer = QTimer()
         self.timer.timeout.connect(self.updateInfo)
 
-    def prepairExit(self):
+    def prepareExit(self):
         self.timer.stop()
 
         if not self.status_icon is None:
@@ -134,17 +149,19 @@ class QtSysTrayIcon:
         self.status_icon.show()
         self.timer.start(500)
 
-        logger.debug("begin loop", self)
+        # logger.debug("begin loop", self)
 
-        self.qapp.exec_()
+        self.qapp.exec()
 
-        logger.debug("end loop", self)
+        # logger.debug("end loop", self)
 
-        self.prepairExit()
+        self.prepareExit()
 
     def updateInfo(self):
+
+        # Exit this systray icon "app" when the snapshots is taken
         if not self.snapshots.busy():
-            self.prepairExit()
+            self.prepareExit()
             self.qapp.exit(0)
             return
 
@@ -154,18 +171,16 @@ class QtSysTrayIcon:
 
         message = self.snapshots.takeSnapshotMessage()
         if message is None and self.last_message is None:
-            message = (0, _('Working...'))
+            message = (0, _('Working…'))
 
         if not message is None:
             if message != self.last_message:
                 self.last_message = message
                 if self.decode:
                     message = (message[0], self.decode.log(message[1]))
-                self.menuStatusMessage.setText('\n'.join(tools.wrapLine(message[1],\
-                                                                         size = 80,\
-                                                                         delimiters = '',\
-                                                                         new_line_indicator = '') \
-                                                                       ))
+                self.menuStatusMessage.setText('\n'.join(textwrap.wrap(message[1], \
+                                                                                width = 80) \
+                                                         ))
                 self.status_icon.setToolTip(message[1])
 
         pg = progress.ProgressFile(self.config)
@@ -186,13 +201,18 @@ class QtSysTrayIcon:
             self.menuProgress.setVisible(False)
 
     def getMenuProgress(self, pg):
-        d = (('sent',   _('Sent:')), \
-             ('speed',  _('Speed:')),\
-             ('eta',    _('ETA:')))
+        d = (
+            ('sent', _('Sent:')),
+            ('speed', _('Speed:')),
+            ('eta',    _('ETA:'))
+        )
+
         for key, txt in d:
             value = pg.strValue(key, '')
+
             if not value:
                 continue
+
             yield txt + ' ' + value
 
     def onStartBIT(self):
@@ -206,7 +226,7 @@ class QtSysTrayIcon:
         dlg = logviewdialog.LogViewDialog(self, systray = True)
         dlg.decode = self.decode
         dlg.cbDecode.setChecked(self.btnDecode.isChecked())
-        dlg.exec_()
+        dlg.exec()
 
     def onBtnDecode(self, checked):
         if checked:
@@ -224,4 +244,13 @@ class QtSysTrayIcon:
         self.snapshots.setTakeSnapshotMessage(0, 'Snapshot terminated')
 
 if __name__ == '__main__':
+
+    logger.openlog()
+
+    if "--debug" in sys.argv:  # HACK: Minimal arg parsing to enable debug-level logging
+        logger.DEBUG = True
+
+    logger.debug("Sub process tries to show systray icon...")
+    logger.debug(f"qtsystrayicon.py call args: {str(sys.argv)}")
+
     QtSysTrayIcon().run()

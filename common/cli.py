@@ -46,7 +46,7 @@ def remove(cfg, snapshot_ids = None, force = None):
     sids = [selectSnapshot(snapshotsList, cfg, sid, 'SnapshotID to remove') for sid in snapshot_ids]
 
     if not force:
-        print('Do you really want to remove this snapshots?')
+        print('Do you really want to remove these snapshots?')
         [print(sid.displayName) for sid in sids]
         if not 'yes' == input('(no/yes): '):
             return
@@ -97,7 +97,7 @@ def checkConfig(cfg, crontab = True):
             return False
         okay()
 
-    test = 'Check/prepair snapshot path'
+    test = 'Check/prepare snapshot path'
     announceTest()
     snapshots_path = cfg.snapshotsPath(mode = mode, tmp_mount = True)
 
@@ -128,9 +128,11 @@ def checkConfig(cfg, crontab = True):
     if crontab:
         test = 'Install crontab'
         announceTest()
+
         if not cfg.setupCron():
             failed()
             return False
+
         okay()
 
     return True
@@ -187,9 +189,11 @@ def terminalSize():
     """
     for fd in (sys.stdin, sys.stdout, sys.stderr):
         try:
-            import fcntl, termios, struct
+            import fcntl
+            import termios
+            import struct
             return [int(x) for x in struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))]
-        except:
+        except ImportError:
             pass
     return [24, 80]
 

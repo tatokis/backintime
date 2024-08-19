@@ -17,39 +17,39 @@
 
 import os
 import sys
+import random
 import subprocess
 import stat
 import shutil
-import getpass
 import unittest
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 from test import generic
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-import config
-import logger
 import mount
 import sshtools
 import tools
 from exceptions import MountException
 
-@unittest.skipIf(not generic.LOCAL_SSH, 'Skip as this test requires a local ssh server, public and private keys installed')
-class TestSSH(generic.SSHTestCase):
-    # running this test requires that user has public / private key pair created and ssh server running
+SKIP_MESSAGE_SSH = 'Skip as this test requires a local ssh server, public ' \
+                   'and private keys installed'
 
+@unittest.skipIf(not generic.LOCAL_SSH, SKIP_MESSAGE_SSH)
+class TestSSH(generic.SSHTestCase):
     def test_can_mount_ssh_rw(self):
         mnt = mount.Mount(cfg = self.cfg, tmp_mount = True)
         mnt.preMountCheck(mode = 'ssh', first_run = True, **self.mount_kwargs)
 
         try:
             hash_id = mnt.mount(mode = 'ssh', check = False, **self.mount_kwargs)
-            full_path = os.path.join(self.sharePath,".local","share","backintime","mnt",hash_id,"mountpoint","testfile")
+            full_path = os.path.join(
+                    self.sharePath, ".local", "share", "backintime", "mnt", hash_id, "mountpoint", "testfile")
 
             # warning - don't use os.access for checking writability
             # https://github.com/bit-team/backintime/issues/490#issuecomment-156265196
             with open(full_path, 'wt') as f:
                 f.write('foo')
+
         finally:
             mnt.umount(hash_id = hash_id)
 
@@ -98,10 +98,6 @@ class TestSSH(generic.SSHTestCase):
         ssh = sshtools.SSH(cfg = self.cfg, cipher = 'non_existing_cipher')
         with self.assertRaisesRegex(MountException, r"Cipher .+ failed for.+"):
             ssh.checkCipher()
-
-    @unittest.skip('Not yet implemented')
-    def test_benchmarkCipher(self):
-        pass
 
     def test_checkKnownHosts(self):
         ssh = sshtools.SSH(cfg = self.cfg)
@@ -241,41 +237,12 @@ class TestSshKey(generic.TestCaseCfg):
             # do not overwrite existing keys
             self.assertFalse(sshtools.sshKeyGen(secKey))
 
-    @unittest.skipIf(getpass.getuser() != 'germar', 'Password login does not work on Travis-ci.')
-    @unittest.skipIf(not generic.LOCAL_SSH, 'Skip as this test requires a local ssh server, public and private keys installed')
-    def test_sshCopyId(self):
-        with TemporaryDirectory() as tmp:
-            secKey = os.path.join(tmp, 'key')
-            pubKey = secKey + '.pub'
-            authKeys = os.path.expanduser('~/.ssh/authorized_keys')
-            authKeysSic = os.path.join(tmp, 'sic')
-            if os.path.exists(authKeys):
-                shutil.copyfile(authKeys, authKeysSic)
-                os.remove(authKeys)
-
-            # create new key
-            sshtools.sshKeyGen(secKey)
-            self.assertIsFile(pubKey)
-            with open(pubKey, 'rt') as f:
-                pubKeyValue = f.read()
-
-            try:
-                # test copy pubKey
-                self.assertTrue(sshtools.sshCopyId(pubKey, self.cfg.user(), 'localhost',
-                                                   askPass = 'test/mock_askpass'))
-
-                self.assertExists(authKeys)
-                with open(authKeys, 'rt') as f:
-                    self.assertIn(pubKeyValue, f.readlines())
-            finally:
-                # restore original ~/.ssh/authorized_keys file without test pubKey
-                if os.path.exists(authKeysSic):
-                    shutil.copyfile(authKeysSic, authKeys)
-
-    @unittest.skipIf(not tools.checkCommand('ssh-keygen'),
-                     "'ssh-keygen' not found.")
+    @unittest.skipIf(not tools.checkCommand('ssh-keygen')
+                     and not generic.ON_TRAVIS,  # enforce test on TravisCI
+                     "'ssh-keygen' not found." )
     def test_sshKeyFingerprint(self):
-        self.assertIsNone(sshtools.sshKeyFingerprint(os.path.abspath(__file__)))
+        self.assertIsNone(
+            sshtools.sshKeyFingerprint(os.path.abspath(__file__)))
 
         with TemporaryDirectory() as d:
             key = os.path.join(d, 'key')
@@ -336,7 +303,7 @@ class TestSshKey(generic.TestCaseCfg):
                 if os.path.exists(knownHostsSic):
                     shutil.copyfile(knownHostsSic, knownHosts)
 
-@unittest.skipIf(not generic.LOCAL_SSH, 'Skip as this test requires a local ssh server, public and private keys installed')
+@unittest.skipIf(not generic.LOCAL_SSH, SKIP_MESSAGE_SSH)
 class TestStartSshAgent(generic.SSHTestCase):
     # running this test requires that user has public / private key pair created and ssh server running
     SOCK = 'SSH_AUTH_SOCK'
@@ -398,3 +365,84 @@ class TestStartSshAgent(generic.SSHTestCase):
         mockWhich.return_value = ''
         with self.assertRaises(MountException):
             self.ssh.startSshAgent()
+
+class SSHCopyID(unittest.TestCase):
+    def test_complete_command(self):
+        """Complete generated command"""
+        command = sshtools.sshCopyIdCommand(
+            generic.PRIV_KEY_FILE,
+            'user',
+            'non_existing_host',
+        )
+        self.assertEqual(
+            command,
+            [
+                'ssh-copy-id',
+                '-i',
+                generic.PRIV_KEY_FILE,
+                '-p',
+                '22',
+                'user@non_existing_host'
+            ]
+        )
+
+    def test_default_port(self):
+        """Default port"""
+        sut = sshtools.sshCopyIdCommand(
+            generic.PRIV_KEY_FILE,
+            'user',
+            'non_existing_host',
+        )
+        self.assertEqual(len(sut), 6, sut)
+        # no port explicit specified
+        self.assertEqual(sut[4], '22')
+
+    def test_custom_port(self):
+        """Custom (random) port"""
+        custom_port = str(random.randint(23, 128))
+
+        sut = sshtools.sshCopyIdCommand(
+            generic.PRIV_KEY_FILE,
+            'user',
+            'non_existing_host',
+            port=custom_port
+        )
+        self.assertEqual(sut[3], '-p')
+        self.assertEqual(sut[4], custom_port)
+
+    def test_proxy_with_default_port(self):
+        """Used proxy and default port"""
+        proxy_user = 'non_existing_proxy_user'
+        proxy_host = 'non_existing_proxy_host'
+
+        sut = sshtools.sshCopyIdCommand(
+            generic.PRIV_KEY_FILE,
+            'user',
+            'non_existing_host',
+            proxy_user=proxy_user,
+            proxy_host=proxy_host
+        )
+
+        self.assertIn(
+            'ProxyJump=non_existing_proxy_user@non_existing_proxy_host:22',
+            sut)
+
+    def test_proxy_with_custom_port(self):
+        """Used proxy and custom port"""
+        proxy_user = 'non_existing_proxy_user'
+        proxy_host = 'non_existing_proxy_host'
+        proxy_port = str(random.randint(23, 128))
+
+        sut = sshtools.sshCopyIdCommand(
+            generic.PRIV_KEY_FILE,
+            'user',
+            'non_existing_host',
+            proxy_user=proxy_user,
+            proxy_host=proxy_host,
+            proxy_port=proxy_port
+        )
+
+        self.assertIn(
+            'ProxyJump=non_existing_proxy_user@non_existing_proxy_host'
+            f':{proxy_port}',
+            sut)

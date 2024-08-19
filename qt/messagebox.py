@@ -14,18 +14,16 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import gettext
-from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtWidgets import QApplication, QMessageBox, QInputDialog, QLineEdit,\
+from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtWidgets import QApplication, QMessageBox, QInputDialog, QLineEdit,\
     QDialog, QVBoxLayout, QLabel, QDialogButtonBox, QScrollArea
 import qttools
 
-_ = gettext.gettext
 
-def askPasswordDialog(parent, title, prompt, timeout = None):
+def askPasswordDialog(parent, title, prompt, language_code, timeout):
     if parent is None:
         app = qttools.createQApplication()
-        translator = qttools.translator()
+        translator = qttools.initiate_translator(language_code)
         app.installTranslator(translator)
 
     import icon
@@ -40,64 +38,110 @@ def askPasswordDialog(parent, title, prompt, timeout = None):
     dialog.setWindowIcon(icon.BIT_LOGO)
     dialog.setWindowTitle(title)
     dialog.setLabelText(prompt)
-    dialog.setTextEchoMode(QLineEdit.Password)
+    dialog.setTextEchoMode(QLineEdit.EchoMode.Password)
     QApplication.processEvents()
 
-    ret = dialog.exec_()
+    ret = dialog.exec()
 
     timer.stop()
     if ret:
         password = dialog.textValue()
     else:
         password = ''
-    del(dialog)
+    del dialog
 
-    return(password)
+    return password
+
+def info(text, title=None, widget_to_center_on=None):
+    """Show a modal information message box.
+
+    The message box is centered on the primary screen if
+    ``widget_to_center_on`` is not given.
+
+    Args:
+        text(str): The information text central to the dialog.
+        title(str): Title of the message box dialog.
+        widget_to_center_on(QWidget): Center the message box on that widget.
+
+    Returns:
+        Nothing.
+    """
+    QMessageBox.information(
+        widget_to_center_on,
+        title if title else ngettext('Information', 'Information', 1),
+        text)
+
 
 def critical(parent, msg):
-    return QMessageBox.critical(parent, _('Error'),
-                                msg,
-                                buttons = QMessageBox.Ok,
-                                defaultButton = QMessageBox.Ok)
+    return QMessageBox.critical(
+        parent,
+        _('Error'),
+        msg,
+        buttons=QMessageBox.StandardButton.Ok,
+        defaultButton=QMessageBox.StandardButton.Ok)
+
 
 def warningYesNo(parent, msg):
-    return QMessageBox.question(parent, _('Question'), msg,
-                                buttons = QMessageBox.Yes | QMessageBox.No,
-                                defaultButton = QMessageBox.No)
+    return QMessageBox.question(
+        parent,
+        _('Question'),
+        msg,
+        buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        defaultButton=QMessageBox.StandardButton.No)
+
 
 def warningYesNoOptions(parent, msg, options = ()):
+
+    # Create a dialog
     dlg = QDialog(parent)
     dlg.setWindowTitle(_('Question'))
     layout = QVBoxLayout()
     dlg.setLayout(layout)
+
+    # Initial message
     label = QLabel(msg)
     layout.addWidget(label)
 
+    # Add optional elements
     for opt in options:
         layout.addWidget(opt['widget'])
 
-    buttonBox = QDialogButtonBox(QDialogButtonBox.Yes | QDialogButtonBox.No)
-    buttonBox.button(QDialogButtonBox.No).setDefault(True)
+    # Button box
+    buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No)
+    buttonBox.button(QDialogButtonBox.StandardButton.No).setDefault(True)
     layout.addWidget(buttonBox)
     buttonBox.accepted.connect(dlg.accept)
     buttonBox.rejected.connect(dlg.reject)
-    ret = dlg.exec_()
-    return (ret, {opt['id']:opt['retFunc']() for opt in options if opt['retFunc'] is not None})
+
+    # Show and ask user for the answer
+    ret = dlg.exec()
+
+    return (
+        ret,
+        {
+            opt['id']:opt['retFunc']()
+            for opt in options
+            if opt['retFunc'] is not None
+        }
+    )
 
 def showInfo(parent, title, msg):
+    """Show extended information dialog with framed and scrollable text area.
+    """
     dlg = QDialog(parent)
     dlg.setWindowTitle(title)
     vlayout = QVBoxLayout(dlg)
     label = QLabel(msg)
-    label.setTextInteractionFlags(Qt.LinksAccessibleByMouse)
+    label.setTextInteractionFlags(
+        Qt.TextInteractionFlag.LinksAccessibleByMouse)
     label.setOpenExternalLinks(True)
 
     scroll_area = QScrollArea()
     scroll_area.setWidget(label)
 
-    buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
+    buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
     buttonBox.accepted.connect(dlg.accept)
 
     vlayout.addWidget(scroll_area)
     vlayout.addWidget(buttonBox)
-    return dlg.exec_()
+    return dlg.exec()
